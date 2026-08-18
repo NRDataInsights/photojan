@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
+import {client} from "@/sanity/lib/client";
+import {urlFor} from "@/sanity/lib/image";
 
 type Collection = {
   slug: string;
@@ -10,118 +12,87 @@ type Collection = {
   files: string[];
 };
 
-/* =========================
-   REAL FILES
-========================= */
+type SanityCollection = {
+  _id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  cover?: unknown;
+  photos?: {
+    _id: string;
+    image?: unknown;
+  }[];
+};
 
-const cityscapeFiles = [
-  "/images/cityscape/Cityscape_21.jpg",
-  "/images/cityscape/Cityscape_22.jpg",
-  "/images/cityscape/Cityscape_23.jpg",
-  "/images/cityscape/Cityscape_24.jpg",
-  "/images/cityscape/Cityscape_25.jpg",
-  "/images/cityscape/Cityscape_26.jpg",
-  "/images/cityscape/Cityscape_27.jpg",
-];
-
-const architectureFiles = Array.from(
-  { length: 21 },
-  (_, i) =>
-    `/images/architecture/Cityscape_${String(i + 1).padStart(2, "0")}.jpg`
-);
-
-const transportFiles = [
-  "/images/transport/Transport_15.jpg",
-  "/images/transport/Transport_16.jpg",
-  "/images/transport/Transport_17.jpg",
-  "/images/transport/Transport_18.jpg",
-];
-
-const urbanDetailsFiles = [
-  "/images/urban-details/Urban detais_01.jpg",
-  "/images/urban-details/Urban detais_02.jpg",
-  "/images/urban-details/Urban details_04.jpg",
-];
-
-const rainFiles = [
-  "/images/rain-reflections/Rain and reflections_01.jpg",
-  "/images/rain-reflections/Rain and reflections_02.jpg",
-  "/images/rain-reflections/Rain and reflections_03.jpg",
-];
-
-const constructionFiles = [
-  "/images/construction/Construction_01.jpg",
-  "/images/construction/Construction_02.jpg",
-  "/images/construction/Construction_03.jpg",
-];
-
-/* =========================
-   COLLECTION DATA
-========================= */
-
-const collections: Collection[] = [
-  {
-    slug: "cityscape",
-    title: "Cityscape",
-    description:
-      "Street atmosphere, architecture, weather, and rhythm.",
-    cover: "/images/cityscape/Cityscape_25.jpg",
-    files: cityscapeFiles,
-  },
-
-  {
-    slug: "architecture",
-    title: "Architecture",
-    description:
-      "Structure, form, facades, geometry.",
-    cover: "/images/architecture/Cityscape_01.jpg",
-    files: architectureFiles,
-  },
-
-  {
-    slug: "transport",
-    title: "Transport",
-    description:
-      "Vehicles, motion, colour, and the city in transit.",
-    cover: "/images/transport/Transport_16.jpg",
-    files: transportFiles,
-  },
-
-  {
-    slug: "urban-details",
-    title: "Urban details",
-    description:
-      "Textures, signage, doors, corners — small scenes people pass.",
-    cover: "/images/urban-details/Urban detais_01.jpg",
-    files: urbanDetailsFiles,
-  },
-
-  {
-    slug: "rain-reflections",
-    title: "Rain and reflections",
-    description:
-      "Wet streets, blurred lights, reflections and mood.",
-    cover:
-      "/images/rain-reflections/Rain and reflections_02.jpg",
-    files: rainFiles,
-  },
-
-  {
-    slug: "construction",
-    title: "Construction",
-    description:
-      "Worksites, cranes, steel and change.",
-    cover:
-      "/images/construction/Construction_03.jpg",
-    files: constructionFiles,
-  },
-];
+const collectionsQuery = `
+  *[_type == "collection"] | order(title asc) {
+    _id,
+    "slug": slug.current,
+    title,
+    description,
+    cover,
+    "photos": *[
+      _type == "photo" &&
+      collection._ref == ^._id
+    ] | order(_createdAt asc) {
+      _id,
+      image
+    }
+  }
+`;
 
 /* =========================
    COMPONENT
 ========================= */
 
 export function Collections() {
+  const [collections, setCollections] = useState<Collection[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCollections() {
+      const data = await client.fetch<SanityCollection[]>(collectionsQuery);
+
+      if (cancelled) return;
+
+      const mapped: Collection[] = data.map((collection) => {
+        const files = (collection.photos ?? [])
+          .filter((photo) => Boolean(photo.image))
+          .map((photo) =>
+            urlFor(photo.image)
+              .width(1800)
+              .quality(90)
+              .url()
+          );
+
+        const cover = collection.cover
+          ? urlFor(collection.cover)
+              .width(1400)
+              .quality(90)
+              .url()
+          : files[0] ?? "";
+
+        return {
+          slug: collection.slug,
+          title: collection.title,
+          description: collection.description ?? "",
+          cover,
+          files,
+        };
+      });
+
+      setCollections(mapped);
+    }
+
+    loadCollections().catch((error) => {
+      console.error("Failed to load Sanity collections:", error);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [activeCollection, setActiveCollection] =
     useState<Collection | null>(null);
 
