@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function AdminPage() {
@@ -36,7 +37,10 @@ export default function AdminPage() {
       </section>
 
       <section className="modules">
-        <div className="module">
+        <Link
+          href="/admin/photos"
+          className="module"
+        >
           <span>01</span>
 
           <h2>Photographs</h2>
@@ -44,7 +48,11 @@ export default function AdminPage() {
           <p>
             Add, edit and organise photographs.
           </p>
-        </div>
+
+          <div className="module-arrow">
+            OPEN →
+          </div>
+        </Link>
 
         <div className="module">
           <span>02</span>
@@ -91,14 +99,14 @@ export default function AdminPage() {
           font-size: 14px;
           font-weight: 700;
 
-          letter-spacing: .14em;
+          letter-spacing: 0.14em;
         }
 
         .label {
           font-size: 10px;
           font-weight: 700;
 
-          letter-spacing: .18em;
+          letter-spacing: 0.18em;
 
           color: #888;
         }
@@ -110,7 +118,7 @@ export default function AdminPage() {
           font-size: 11px;
           font-weight: 700;
 
-          letter-spacing: .14em;
+          letter-spacing: 0.14em;
 
           cursor: pointer;
         }
@@ -127,8 +135,8 @@ export default function AdminPage() {
           font-size:
             clamp(90px, 16vw, 220px);
 
-          line-height: .75;
-          letter-spacing: -.08em;
+          line-height: 0.75;
+          letter-spacing: -0.08em;
 
           font-weight: 900;
         }
@@ -155,6 +163,18 @@ export default function AdminPage() {
 
           border-bottom:
             1px solid #d0d0ca;
+
+          color: inherit;
+          text-decoration: none;
+
+          cursor: pointer;
+
+          transition:
+            opacity 0.2s ease;
+        }
+
+        .module:hover {
+          opacity: 0.55;
         }
 
         .module:first-child {
@@ -179,7 +199,7 @@ export default function AdminPage() {
           font-size:
             clamp(34px, 4vw, 60px);
 
-          letter-spacing: -.05em;
+          letter-spacing: -0.05em;
         }
 
         .module p {
@@ -189,6 +209,15 @@ export default function AdminPage() {
           line-height: 1.6;
 
           color: #666;
+        }
+
+        .module-arrow {
+          margin-top: 35px;
+
+          font-size: 10px;
+          font-weight: 700;
+
+          letter-spacing: 0.14em;
         }
 
         @media (max-width: 700px) {
