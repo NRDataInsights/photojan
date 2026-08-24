@@ -225,11 +225,18 @@ export function Collections() {
             >
 
               <div className="pj-collection-image">
-                <img
-                  src={collection.cover}
-                  alt={collection.title}
-                />
-              </div>
+  {collection.cover ? (
+    <img
+      src={collection.cover}
+      alt={collection.title}
+    />
+  ) : (
+    <div
+      className="pj-collection-placeholder"
+      aria-hidden="true"
+    />
+  )}
+</div>
 
               <div className="pj-collection-content">
 
@@ -533,7 +540,12 @@ export function Collections() {
 
           background: #111;
         }
-
+.pj-collection-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  background: #111;
+}
         .pj-collection-image img {
           display: block;
 
