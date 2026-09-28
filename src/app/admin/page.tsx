@@ -54,7 +54,10 @@ export default function AdminPage() {
           </div>
         </Link>
 
-        <div className="module">
+        <Link
+          href="/admin/journal"
+          className="module"
+        >
           <span>02</span>
 
           <h2>Journal</h2>
@@ -62,7 +65,11 @@ export default function AdminPage() {
           <p>
             Create and edit journal articles.
           </p>
-        </div>
+
+          <div className="module-arrow">
+            OPEN →
+          </div>
+        </Link>
       </section>
 
       <style>{`

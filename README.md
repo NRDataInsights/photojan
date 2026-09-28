@@ -69,6 +69,28 @@ NEXT_PUBLIC_SANITY_DATASET=production
 
 Then `/studio` becomes the embedded editing interface.
 
+## Custom content editor
+
+The simplified editor is available at `/admin`. It manages photographs and
+journal entries without exposing the full Sanity Studio interface. Configure:
+
+```env
+SANITY_API_WRITE_TOKEN=...
+ADMIN_EMAIL=...
+ADMIN_PASSWORD_HASH=...
+ADMIN_SESSION_SECRET=...
+```
+
+`ADMIN_PASSWORD_HASH` is the SHA-256 hash of the editor password. Generate it
+locally with:
+
+```bash
+node -e "console.log(require('crypto').createHash('sha256').update('your-password').digest('hex'))"
+```
+
+Use a long, random value for `ADMIN_SESSION_SECRET`. The Sanity token must have
+Editor permissions and must never use the `NEXT_PUBLIC_` prefix.
+
 Important: this starter intentionally keeps the visible site on the existing WordPress image URLs for Phase 1. That lets us reproduce and improve the design first. Phase 2 is moving photos and text into Sanity and replacing `src/data/collections.ts` with GROQ queries.
 
 ## Recommended migration order
