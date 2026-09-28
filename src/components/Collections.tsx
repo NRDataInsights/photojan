@@ -9,7 +9,17 @@ type Collection = {
   title: string;
   description: string;
   cover: string;
-  files: string[];
+  photos: Photo[];
+};
+
+type Photo = {
+  _id: string;
+  url: string;
+  title: string;
+  alt: string;
+  caption: string;
+  year?: number;
+  location: string;
 };
 
 type SanityCollection = {
@@ -20,7 +30,13 @@ type SanityCollection = {
   cover?: unknown;
   photos?: {
     _id: string;
-    image?: unknown;
+    title?: string;
+    caption?: string;
+    year?: number;
+    location?: string;
+    image?: {
+      alt?: string;
+    };
   }[];
 };
 
@@ -36,6 +52,10 @@ const collectionsQuery = `
       collection._ref == ^._id
     ] | order(_createdAt asc) {
       _id,
+      title,
+      caption,
+      year,
+      location,
       image
     }
   }
@@ -57,28 +77,34 @@ export function Collections() {
       if (cancelled) return;
 
       const mapped: Collection[] = data.map((collection) => {
-        const files = (collection.photos ?? [])
+        const photos = (collection.photos ?? [])
           .filter((photo) => Boolean(photo.image))
-          .map((photo) =>
-            urlFor(photo.image)
+          .map((photo) => ({
+            _id: photo._id,
+            url: urlFor(photo.image)
               .width(1800)
               .quality(90)
-              .url()
-          );
+              .url(),
+            title: photo.title ?? "Untitled",
+            alt: photo.image?.alt ?? photo.title ?? "Photograph",
+            caption: photo.caption ?? "",
+            year: photo.year,
+            location: photo.location ?? "",
+          }));
 
         const cover = collection.cover
           ? urlFor(collection.cover)
               .width(1400)
               .quality(90)
               .url()
-          : files[0] ?? "";
+          : photos[0]?.url ?? "";
 
         return {
           slug: collection.slug,
           title: collection.title,
           description: collection.description ?? "",
           cover,
-          files,
+          photos,
         };
       });
 
@@ -121,7 +147,7 @@ export function Collections() {
 
     setLightboxIndex(
       (lightboxIndex + 1) %
-        activeCollection.files.length
+        activeCollection.photos.length
     );
   }
 
@@ -132,8 +158,8 @@ export function Collections() {
       (
         lightboxIndex -
         1 +
-        activeCollection.files.length
-      ) % activeCollection.files.length
+        activeCollection.photos.length
+      ) % activeCollection.photos.length
     );
   }
 
@@ -249,7 +275,7 @@ export function Collections() {
                 </p>
 
                 <span>
-                  {collection.files.length} photos
+                  {collection.photos.length} photos
                 </span>
 
               </div>
@@ -289,7 +315,7 @@ export function Collections() {
                 </h3>
 
                 <span>
-                  {activeCollection.files.length}
+                  {activeCollection.photos.length}
                   {" "}photographs
                 </span>
               </div>
@@ -307,12 +333,12 @@ export function Collections() {
 
             <div className="pj-photo-grid">
 
-              {activeCollection.files
+              {activeCollection.photos
                 .slice(0, shown)
-                .map((file, index) => (
+                .map((photo, index) => (
 
                   <button
-                    key={`${file}-${index}`}
+                    key={photo._id}
                     type="button"
                     className="pj-photo"
                     onClick={() =>
@@ -321,8 +347,8 @@ export function Collections() {
                   >
 
                     <img
-                      src={file}
-                      alt={`${activeCollection.title} ${index + 1}`}
+                      src={photo.url}
+                      alt={photo.alt}
                       loading="lazy"
                     />
 
@@ -333,7 +359,7 @@ export function Collections() {
             </div>
 
             {shown <
-              activeCollection.files.length && (
+              activeCollection.photos.length && (
 
               <div className="pj-show-more-wrap">
 
@@ -344,7 +370,7 @@ export function Collections() {
                     setShown((current) =>
                       Math.min(
                         current + 6,
-                        activeCollection.files.length
+                        activeCollection.photos.length
                       )
                     )
                   }
@@ -379,14 +405,52 @@ export function Collections() {
             }
           >
 
-            <img
-              src={
-                activeCollection.files[
-                  lightboxIndex
-                ]
-              }
-              alt={`${activeCollection.title} ${lightboxIndex + 1}`}
-            />
+            <div className="pj-lightbox-image-wrap">
+              <img
+                src={activeCollection.photos[lightboxIndex].url}
+                alt={activeCollection.photos[lightboxIndex].alt}
+              />
+
+              <button
+                className="pj-lightbox-arrow pj-prev"
+                type="button"
+                onClick={previousImage}
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+
+              <button
+                className="pj-lightbox-arrow pj-next"
+                type="button"
+                onClick={nextImage}
+                aria-label="Next image"
+              >
+                ›
+              </button>
+
+              <div className="pj-lightbox-count">
+                {lightboxIndex + 1}
+                {" / "}
+                {activeCollection.photos.length}
+              </div>
+            </div>
+
+            <div className="pj-lightbox-info">
+              <div className="pj-lightbox-meta">
+                <span>{activeCollection.title}</span>
+                {activeCollection.photos[lightboxIndex].year && (
+                  <span>{activeCollection.photos[lightboxIndex].year}</span>
+                )}
+                {activeCollection.photos[lightboxIndex].location && (
+                  <span>{activeCollection.photos[lightboxIndex].location}</span>
+                )}
+              </div>
+              <h4>{activeCollection.photos[lightboxIndex].title}</h4>
+              {activeCollection.photos[lightboxIndex].caption && (
+                <p>{activeCollection.photos[lightboxIndex].caption}</p>
+              )}
+            </div>
 
             <button
               className="pj-lightbox-close"
@@ -396,30 +460,6 @@ export function Collections() {
             >
               ×
             </button>
-
-            <button
-              className="pj-lightbox-arrow pj-prev"
-              type="button"
-              onClick={previousImage}
-              aria-label="Previous image"
-            >
-              ‹
-            </button>
-
-            <button
-              className="pj-lightbox-arrow pj-next"
-              type="button"
-              onClick={nextImage}
-              aria-label="Next image"
-            >
-              ›
-            </button>
-
-            <div className="pj-lightbox-count">
-              {lightboxIndex + 1}
-              {" / "}
-              {activeCollection.files.length}
-            </div>
 
           </div>
         </div>
@@ -848,32 +888,82 @@ export function Collections() {
           position:
             relative;
 
-          width: 100%;
+          width: min(1500px, 100%);
           height: 100%;
+
+          display: grid;
+
+          grid-template-columns:
+            minmax(0, 1fr)
+            minmax(280px, 360px);
+        }
+
+        .pj-lightbox-image-wrap {
+          position: relative;
+
+          min-width: 0;
+          min-height: 0;
 
           display: flex;
 
-          align-items:
-            center;
+          align-items: center;
+          justify-content: center;
 
-          justify-content:
-            center;
+          padding: 20px 54px;
         }
 
-        .pj-lightbox-inner > img {
+        .pj-lightbox-image-wrap > img {
           display: block;
 
-          max-width:
-            calc(100vw - 100px);
-
-          max-height:
-            calc(100vh - 90px);
+          max-width: 100%;
+          max-height: calc(100vh - 80px);
 
           width: auto;
           height: auto;
 
-          object-fit:
-            contain;
+          object-fit: contain;
+        }
+
+        .pj-lightbox-info {
+          align-self: center;
+
+          padding: 40px;
+
+          border-left:
+            1px solid
+            rgba(255,255,255,.14);
+        }
+
+        .pj-lightbox-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px 16px;
+
+          margin-bottom: 18px;
+
+          font-size: 10px;
+          font-weight: 650;
+          letter-spacing: .16em;
+          text-transform: uppercase;
+
+          color: rgba(255,255,255,.48);
+        }
+
+        .pj-lightbox-info h4 {
+          margin: 0;
+
+          font-size: clamp(26px, 3vw, 44px);
+          line-height: 1.05;
+          letter-spacing: -.045em;
+        }
+
+        .pj-lightbox-info p {
+          margin: 24px 0 0;
+
+          font-size: 15px;
+          line-height: 1.65;
+
+          color: rgba(255,255,255,.68);
         }
 
         .pj-lightbox-close {
@@ -1004,14 +1094,37 @@ export function Collections() {
               1fr;
           }
 
-          .pj-lightbox-inner > img {
-            max-width:
-              100%;
+          .pj-lightbox-inner {
+            grid-template-columns: 1fr;
+            grid-template-rows: minmax(0, 1fr) auto;
+          }
 
-            max-height:
-              calc(
-                100vh - 120px
-              );
+          .pj-lightbox-image-wrap {
+            padding: 54px 0 20px;
+          }
+
+          .pj-lightbox-image-wrap > img {
+            max-height: calc(100vh - 250px);
+          }
+
+          .pj-lightbox-info {
+            align-self: end;
+
+            max-height: 190px;
+            overflow-y: auto;
+
+            padding: 20px 8px 12px;
+
+            border-top: 1px solid rgba(255,255,255,.14);
+            border-left: 0;
+          }
+
+          .pj-lightbox-info h4 {
+            font-size: 25px;
+          }
+
+          .pj-lightbox-info p {
+            margin-top: 12px;
           }
 
           .pj-lightbox-arrow {
