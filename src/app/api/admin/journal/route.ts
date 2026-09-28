@@ -108,13 +108,18 @@ export async function PATCH(request: Request) {
       title: data.title,
       body: bodyToBlocks(data.bodyText),
       "coverImage.alt": data.coverAlt,
-    }).unset(["category", "publishedAt", "excerpt"]);
+    });
 
     const optionalFields: Record<string, string> = {};
+    const fieldsToUnset: string[] = [];
     if (data.category) optionalFields.category = data.category;
+    else fieldsToUnset.push("category");
     if (data.publishedAt) optionalFields.publishedAt = new Date(data.publishedAt).toISOString();
+    else fieldsToUnset.push("publishedAt");
     if (data.excerpt) optionalFields.excerpt = data.excerpt;
+    else fieldsToUnset.push("excerpt");
     if (Object.keys(optionalFields).length) patch.set(optionalFields);
+    if (fieldsToUnset.length) patch.unset(fieldsToUnset);
     if (file instanceof File && file.size > 0) patch.set({ coverImage: await uploadCover(file, data.coverAlt) });
 
     const note = await patch.commit();

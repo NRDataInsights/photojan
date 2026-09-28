@@ -109,13 +109,18 @@ export async function PATCH(request: Request) {
       title,
       collection: { _type: "reference", _ref: collectionId },
       "image.alt": alt,
-    }).unset(["caption", "location", "year"]);
+    });
 
     const optionalFields: Record<string, string | number> = {};
+    const fieldsToUnset: string[] = [];
     if (caption) optionalFields.caption = caption;
+    else fieldsToUnset.push("caption");
     if (location) optionalFields.location = location;
+    else fieldsToUnset.push("location");
     if (year !== undefined) optionalFields.year = year;
+    else fieldsToUnset.push("year");
     if (Object.keys(optionalFields).length) patch.set(optionalFields);
+    if (fieldsToUnset.length) patch.unset(fieldsToUnset);
     if (file instanceof File && file.size > 0) patch.set({ image: await uploadImage(file, alt) });
 
     const photo = await patch.commit();
