@@ -1,7 +1,7 @@
 const nav = [
   ["HOME", "/"],
   ["PROJECT", "/#project"],
-  ["FOLLOW", "/#follow"],
+  //["FOLLOW", "/#follow"],
   ["GALLERIES", "/#collections"],
   ["JOURNAL", "/journal"],
   ["ABOUT", "/about"],
