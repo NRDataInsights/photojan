@@ -5,7 +5,7 @@ const nav = [
   ["GALLERIES", "/#collections"],
   ["JOURNAL", "/journal"],
   ["ABOUT", "/about"],
-  ["CONTACT", "/#contact"],
+  //["CONTACT", "/#contact"],
 ];
 
 export function Header() {
